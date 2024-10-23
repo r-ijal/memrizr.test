@@ -1,4 +1,4 @@
-module memrizr
+module memrizr/account
 
 go 1.23.2
 

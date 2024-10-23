@@ -2,8 +2,8 @@ package handler
 
 import (
 	"log"
-	"memrizr/model"
-	"memrizr/model/apperrors"
+	"memrizr/account/model"
+	"memrizr/account/model/apperrors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"memrizr/handler"
+	"memrizr/account/handler"
 	"net/http"
 	"os"
 	"os/signal"

@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"memrizr/model"
+	"memrizr/account/model"
 	"net/http"
 	"os"
 

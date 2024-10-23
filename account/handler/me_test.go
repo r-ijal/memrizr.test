@@ -12,9 +12,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"memrizr/model"
-	"memrizr/model/apperrors"
-	"memrizr/model/mocks"
+	"memrizr/account/model"
+	"memrizr/account/model/apperrors"
+	"memrizr/account/model/mocks"
 )
 
 func TestMe(t *testing.T) {
