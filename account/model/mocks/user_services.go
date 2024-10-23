@@ -21,7 +21,7 @@ func (m *MockUserService) Get(ctx context.Context, uid uuid.UUID) (*model.User, 
 
 	// first value passed to "Return"
 	var r0 *model.User
-	if ret.Get(0) != uuid.Nil {
+	if ret.Get(0) != nil {
 		// we can just return this if we know we won't be passing function to "Return"
 		r0 = ret.Get(0).(*model.User)
 	}
