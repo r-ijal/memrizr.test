@@ -120,7 +120,7 @@ func TestMe(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		assert.Equal(t, http.StatusNotFound, rr.Code)
+		assert.Equal(t, respErr.Status(), rr.Code)
 		assert.Equal(t, respBody, rr.Body.Bytes())
 		mockUserService.AssertExpectations(t)
 	})
