@@ -29,7 +29,7 @@ func TestSignup(t *testing.T) {
 		router := gin.Default()
 
 		NewHandler(&Config{
-			R: router,
+			R:           router,
 			UserService: mockUserService,
 		})
 
@@ -49,7 +49,6 @@ func TestSignup(t *testing.T) {
 		mockUserService.AssertNotCalled(t, "Signup")
 	})
 
-	
 	t.Run("Invalid email", func(t *testing.T) {
 		// we just want this to show that it's not called in this case
 		mockUserService := new(mocks.MockUserService)
@@ -60,12 +59,12 @@ func TestSignup(t *testing.T) {
 		router := gin.Default()
 
 		NewHandler(&Config{
-			R: router,
+			R:           router,
 			UserService: mockUserService,
 		})
 
 		reqBody, err := json.Marshal(gin.H{
-			"email": "bob@bob",
+			"email":    "bob@bob",
 			"password": "supersecret1234",
 		})
 		assert.NoError(t, err)
@@ -80,7 +79,7 @@ func TestSignup(t *testing.T) {
 		assert.Equal(t, 400, rr.Code)
 		mockUserService.AssertNotCalled(t, "Signup")
 	})
-	
+
 	t.Run("Password too short", func(t *testing.T) {
 		// we just want this to show that it's not called in this case
 		mockUserService := new(mocks.MockUserService)
@@ -91,12 +90,12 @@ func TestSignup(t *testing.T) {
 		router := gin.Default()
 
 		NewHandler(&Config{
-			R: router,
+			R:           router,
 			UserService: mockUserService,
 		})
 
 		reqBody, err := json.Marshal(gin.H{
-			"email": "bob@bob.com",
+			"email":    "bob@bob.com",
 			"password": "supe",
 		})
 		assert.NoError(t, err)
@@ -111,7 +110,7 @@ func TestSignup(t *testing.T) {
 		assert.Equal(t, 400, rr.Code)
 		mockUserService.AssertNotCalled(t, "Signup")
 	})
-	
+
 	t.Run("Password too long", func(t *testing.T) {
 		// we just want this to show that it's not called in this case
 		mockUserService := new(mocks.MockUserService)
@@ -122,12 +121,12 @@ func TestSignup(t *testing.T) {
 		router := gin.Default()
 
 		NewHandler(&Config{
-			R: router,
+			R:           router,
 			UserService: mockUserService,
 		})
 
 		reqBody, err := json.Marshal(gin.H{
-			"email": "bob@bob.com",
+			"email":    "bob@bob.com",
 			"password": "vdWYfzJ1PqhMnrKxJyr8cvZ6mPXAyXR3E71No3YBrYktPOCmay",
 		})
 		assert.NoError(t, err)
@@ -142,10 +141,10 @@ func TestSignup(t *testing.T) {
 		assert.Equal(t, 400, rr.Code)
 		mockUserService.AssertNotCalled(t, "Signup")
 	})
-	
+
 	t.Run("Error returned from UserService", func(t *testing.T) {
 		u := &model.User{
-			Email: "bob@bob.com",
+			Email:    "bob@bob.com",
 			Password: "avalidpassword",
 		}
 
@@ -157,8 +156,51 @@ func TestSignup(t *testing.T) {
 		router := gin.Default()
 
 		NewHandler(&Config{
+			R:           router,
+			UserService: mockUserService,
+		})
+
+		reqBody, err := json.Marshal(gin.H{
+			"email":    u.Email,
+			"password": u.Password,
+		})
+		assert.NoError(t, err)
+
+		req, err := http.NewRequest(http.MethodPost, "/signup", bytes.NewBuffer(reqBody))
+		assert.NoError(t, err)
+
+		req.Header.Set("Content-Type", "application/json")
+
+		router.ServeHTTP(rr, req)
+
+		assert.Equal(t, 409, rr.Code)
+		mockUserService.AssertExpectations(t)
+	})
+
+	t.Run("Successful Token Creation", func(t *testing.T) {
+		u := &model.User{
+			Email:    "bob@bob.com",
+			Password: "avalidpassword",
+		}
+
+		mockTokenResp := &model.TokenPair{
+			IDToken:      "idToken",
+			RefreshToken: "refreshToken",
+		}
+
+		mockUserService := new(mocks.MockUserService)
+		mockTokenService := new(mocks.MockTokenService)
+
+		mockUserService.On("Signup", mock.AnythingOfType("*gin.Context"), u).Return(nil)
+		mockTokenService.On("NewPairFromUser", mock.AnythingOfType("*gin.Context"), u, "").Return(mockTokenResp, nil)
+
+		rr := httptest.NewRecorder()
+		router := gin.Default()
+
+		NewHandler(&Config{
 			R: router,
 			UserService: mockUserService,
+			TokenService: mockTokenService,
 		})
 
 		reqBody, err := json.Marshal(gin.H{
@@ -174,7 +216,63 @@ func TestSignup(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(t, 409, rr.Code)
+		respBody, err := json.Marshal(gin.H{
+			"tokens": mockTokenResp,
+		})
+		assert.NoError(t, err)
+
+		assert.Equal(t, http.StatusCreated, rr.Code)
+		assert.Equal(t, respBody, rr.Body.Bytes())
+
 		mockUserService.AssertExpectations(t)
+		mockTokenService.AssertExpectations(t)
+	})
+	
+	t.Run("Failed Token Creation", func(t *testing.T) {
+		u := &model.User{
+			Email:    "bob@bob.com",
+			Password: "avalidpassword",
+		}
+
+		mockErrorResponse := apperrors.NewInternal()
+
+		mockUserService := new(mocks.MockUserService)
+		mockTokenService := new(mocks.MockTokenService)
+
+		mockUserService.On("Signup", mock.AnythingOfType("*gin.Context"), u).Return(nil)
+		mockTokenService.On("NewPairFromUser", mock.AnythingOfType("*gin.Context"), u, "").Return(nil, mockErrorResponse)
+
+		rr := httptest.NewRecorder()
+		router := gin.Default()
+
+		NewHandler(&Config{
+			R: router,
+			UserService: mockUserService,
+			TokenService: mockTokenService,
+		})
+
+		reqBody, err := json.Marshal(gin.H{
+			"email": u.Email,
+			"password": u.Password,
+		})
+		assert.NoError(t, err)
+
+		req, err := http.NewRequest(http.MethodPost, "/signup", bytes.NewBuffer(reqBody))
+		assert.NoError(t, err)
+
+		req.Header.Set("Content-Type", "application/json")
+
+		router.ServeHTTP(rr, req)
+
+		respBody, err := json.Marshal(gin.H{
+			"error": mockErrorResponse,
+		})
+		assert.NoError(t, err)
+
+		assert.Equal(t, mockErrorResponse.Status(), rr.Code)
+		assert.Equal(t, respBody, rr.Body.Bytes())
+
+		mockUserService.AssertExpectations(t)
+		mockTokenService.AssertExpectations(t)
 	})
 }

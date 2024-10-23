@@ -1,7 +1,7 @@
 package handler
 
 import (
-	// "net/http"
+	"net/http"
 
 	"log"
 	"memrizr/account/model"
@@ -43,4 +43,24 @@ func (h *Handler) Signup(c *gin.Context) {
 		})
 		return
 	}
+
+    // create token pair as strings
+    tokens, err := h.TokenService.NewPairFromUser(c, u, "")
+
+    if err != nil {
+        log.Printf("Failed to create tokens for user: %v\n", err.Error())
+
+        // may eventually implement rollback logic here
+        // meaning, if we fail to create tokens after creating a user,
+        // we make sure to clear/delete the created user in the database
+
+        c.JSON(apperrors.Status(err), gin.H{
+            "error": err,
+        })
+        return
+    }
+
+    c.JSON(http.StatusCreated, gin.H{
+        "tokens": tokens,
+    })
 }
