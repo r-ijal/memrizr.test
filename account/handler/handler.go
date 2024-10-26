@@ -34,12 +34,6 @@ func NewHandler(c *Config) {
 	// Create an account group
 	g := c.R.Group(os.Getenv("ACCOUNT_API_URL"))
 
-	// g.GET("/", func(c *gin.Context) {
-	// 	c.JSON(http.StatusOK, gin.H {
-	// 		"hello": "space persons",
-	// 	})
-	// })
-
 	g.GET("/me", h.Me)
 	g.POST("/signup", h.Signup)
 	g.POST("/signin", h.Signin)
