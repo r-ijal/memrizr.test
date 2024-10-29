@@ -107,7 +107,10 @@ func TestSignup(t *testing.T) {
         // We can use Run method to modify the user when the Create method is called.
         //  We can then chain on a Return method to return no error
         mockUserRepository.
-            On("Create", mock.AnythingOfType("context.todoCtx"), mockUser).
+            On("Create",
+            mock.AnythingOfType("context.todoCtx"),
+            // mock.MatchedBy(func(ctx context.Context) bool { return true}),
+            mockUser).
             Return(mockErr)
 
         ctx := context.TODO()

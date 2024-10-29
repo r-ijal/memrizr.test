@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"memrizr/account/model"
 	"memrizr/account/model/apperrors"
@@ -149,7 +150,12 @@ func TestSignup(t *testing.T) {
 		}
 
 		mockUserService := new(mocks.MockUserService)
-		mockUserService.On("Signup", mock.AnythingOfType("*context.emptyCtx"), u).Return(apperrors.NewConflict("User Already Exist", u.Email))
+		mockUserService.
+			On("Signup",
+				// mock.AnythingOfType("*context.emptyCtx"),
+				mock.MatchedBy(func(ctx context.Context) bool { return true}),
+				u).
+			Return(apperrors.NewConflict("User Already Exist", u.Email))
 
 		rr := httptest.NewRecorder()
 
@@ -191,7 +197,16 @@ func TestSignup(t *testing.T) {
 		mockUserService := new(mocks.MockUserService)
 		mockTokenService := new(mocks.MockTokenService)
 
-		mockUserService.On("Signup", mock.AnythingOfType("*context.emptyCtx"), u).Return(nil)
+		// ctx := context.Background()
+		mockUserService.
+			On("Signup",
+				// ctx,
+				mock.AnythingOfType("*context.backgroundCtx"),
+				// mock.MatchedBy(func(ctx context.Context) bool { return true}),
+				// mock.Anything,
+				// context.TODO(),
+				u).
+			Return(nil)
 		mockTokenService.On("NewPairFromUser", mock.AnythingOfType("*context.emptyCtx"), u, "").Return(mockTokenResp, nil)
 
 		rr := httptest.NewRecorder()
@@ -239,7 +254,12 @@ func TestSignup(t *testing.T) {
 		mockUserService := new(mocks.MockUserService)
 		mockTokenService := new(mocks.MockTokenService)
 
-		mockUserService.On("Signup", mock.AnythingOfType("*context.emptyCtx"), u).Return(nil)
+		mockUserService.
+			On("Signup",
+				// mock.AnythingOfType("*context.emptyCtx"),
+				mock.MatchedBy(func(ctx *context.Context) bool { return true}),
+				u).
+			Return(nil)
 		mockTokenService.On("NewPairFromUser", mock.AnythingOfType("*context.emptyCtx"), u, "").Return(nil, mockErrorResponse)
 
 		rr := httptest.NewRecorder()
