@@ -35,7 +35,10 @@ func (h *Handler) Signup(c *gin.Context) {
 		Password: req.Password,
 	}
 
-	err := h.UserService.Signup(c, u)
+	ctx := c.Request.Context()
+	err := h.UserService.Signup(ctx, u)
+	// err := h.UserService.Signup(c, u)
+
 	if err != nil {
 		log.Printf("Failed to sign up user: %v\n", err.Error())
 		c.JSON(apperrors.Status(err), gin.H{
@@ -45,7 +48,7 @@ func (h *Handler) Signup(c *gin.Context) {
 	}
 
     // create token pair as strings
-    tokens, err := h.TokenService.NewPairFromUser(c, u, "")
+    tokens, err := h.TokenService.NewPairFromUser(ctx, u, "")
 
     if err != nil {
         log.Printf("Failed to create tokens for user: %v\n", err.Error())

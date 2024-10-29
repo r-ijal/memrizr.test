@@ -3,23 +3,24 @@ package handler
 import (
 	"memrizr/account/model"
 	"net/http"
-	"os"
+	// "os"
 
 	"github.com/gin-gonic/gin"
 )
 
 // Handler struct holds required services for handler to function
 type Handler struct {
-	UserService model.UserService
+	UserService  model.UserService
 	TokenService model.TokenService
 }
 
 // Config will hold services that will eventually be injected
 // into this handler layer on handler initialization
 type Config struct {
-	R           *gin.Engine
-	UserService model.UserService
+	R            *gin.Engine
+	UserService  model.UserService
 	TokenService model.TokenService
+	BaseURL      string
 }
 
 // NewHandler initializes the handler with required injected services along with http routes
@@ -27,12 +28,13 @@ type Config struct {
 func NewHandler(c *Config) {
 	// Create a handler
 	h := &Handler{
-		UserService: c.UserService,
+		UserService:  c.UserService,
 		TokenService: c.TokenService,
-}
+	}
 
 	// Create an account group
-	g := c.R.Group(os.Getenv("ACCOUNT_API_URL"))
+	// g := c.R.Group(os.Getenv("ACCOUNT_API_URL"))
+	g := c.R.Group(c.BaseURL)
 
 	g.GET("/me", h.Me)
 	g.POST("/signup", h.Signup)

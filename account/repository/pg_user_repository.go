@@ -23,17 +23,21 @@ func NewUserRepository(db *sqlx.DB) model.UserRepository {
 
 // reaches out to database SQLX api
 func (r *pGUserRepository) Create(ctx context.Context, u *model.User) error {
-	query := "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *"
+	query := "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING uid, email, password"
 
-	if err := r.DB.Get(u, query, u.Email, u.Password); err != nil {
+	row := r.DB.QueryRowContext(ctx, query, u.Email, u.Password)
+
+	// if err := r.DB.GetContext(ctx, query, u.Email, u.Password); err != nil {
+	if err := row.Scan(&u.UID, &u.Email, &u.Password); err != nil {
+		log.Printf("Error inserting user: %v, query: %v, ctx: %v", err, query, ctx)
 
 		// check unique constraint
-		if err, ok := err.(*pq.Error); ok && err.Code.Name() == "unique_violation" {
-			log.Printf("Could not create a user with email: %v. Reason: %v\n", u.Email, err.Code.Name())
+		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code.Name() == "unique_violation" {
+			log.Printf("Unique constraint violation for email: %v. Reason: %v\n", u.Email, pqErr.Code.Name())
 			return apperrors.NewConflict("email", u.Email)
 		}
 
-		log.Printf("Could not create a user with email: %v. Reason: %v\n", u.Email, err)
+		log.Printf("Database error for email: %v, Reason: %v", u.Email, err)
 		return apperrors.NewInternal()
 	}
 	return nil
@@ -45,7 +49,7 @@ func (r *pGUserRepository) FindByID(ctx context.Context, uid uuid.UUID) (*model.
 
 	query := "SELECT * FROM users WHERE uid = $1"
 
-	if err := r.DB.Get(user, query, uid); err != nil {
+	if err := r.DB.GetContext(ctx, user, query, uid); err != nil {
 		return user, apperrors.NewNotFound("uid", uid.String())
 	}
 
