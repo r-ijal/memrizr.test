@@ -201,13 +201,18 @@ func TestSignup(t *testing.T) {
 		mockUserService.
 			On("Signup",
 				// ctx,
-				mock.AnythingOfType("*context.backgroundCtx"),
+				// mock.AnythingOfType("*context.backgroundCtx"),
 				// mock.MatchedBy(func(ctx context.Context) bool { return true}),
-				// mock.Anything,
+				mock.Anything,
 				// context.TODO(),
 				u).
 			Return(nil)
-		mockTokenService.On("NewPairFromUser", mock.AnythingOfType("*context.emptyCtx"), u, "").Return(mockTokenResp, nil)
+		mockTokenService.
+			On("NewPairFromUser",
+				// mock.AnythingOfType("*context.emptyCtx"),
+				mock.Anything,
+				u, "").
+			Return(mockTokenResp, nil)
 
 		rr := httptest.NewRecorder()
 		router := gin.Default()
@@ -257,10 +262,17 @@ func TestSignup(t *testing.T) {
 		mockUserService.
 			On("Signup",
 				// mock.AnythingOfType("*context.emptyCtx"),
-				mock.MatchedBy(func(ctx *context.Context) bool { return true}),
+				// mock.MatchedBy(func(ctx *context.Context) bool { return true}),
+				mock.Anything,
 				u).
 			Return(nil)
-		mockTokenService.On("NewPairFromUser", mock.AnythingOfType("*context.emptyCtx"), u, "").Return(nil, mockErrorResponse)
+		mockTokenService.
+			On("NewPairFromUser",
+				// mock.AnythingOfType("*context.emptyCtx"),
+				// mock.MatchedBy(func(ctx *context.Context) bool { return true}),
+				mock.Anything,
+				u, "").
+			Return(nil, mockErrorResponse)
 
 		rr := httptest.NewRecorder()
 		router := gin.Default()
