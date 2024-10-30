@@ -50,6 +50,7 @@ func NewTokenService(c *TSConfig) model.TokenService {
 func (s *tokenService) NewPairFromUser(ctx context.Context, u *model.User, prevTokenID string) (*model.TokenPair, error) {
 	// No need to use a repository for idToken as it is unrelated to any data source
 	idToken, err := generateIDToken(u, s.PrivKey, s.IDExpirationSecs)
+	log.Printf("------idToken-----: %v\n", idToken)
 
 	if err != nil {
 		log.Printf("Error generating idToken for uid: %v. Error: %v\n", u.UID, err.Error())
@@ -64,7 +65,7 @@ func (s *tokenService) NewPairFromUser(ctx context.Context, u *model.User, prevT
 	}
 
 	// set freshly minted refresh token to valid list
-	if err := s.TokenRepository.SetRefreshToken(ctx, u.UID.String(), refreshToken.ID, refreshToken.ExpiresIn); err != nil {
+	if err := s.TokenRepository.SetRefreshToken(ctx, u.UID.String(), refreshToken.ID.String(), refreshToken.ExpiresIn); err != nil {
 		log.Printf("Error storing tokenID for uid: %v. Error: %v\n", u.UID, err.Error())
 		return nil, apperrors.NewInternal()
 	}
@@ -77,7 +78,21 @@ func (s *tokenService) NewPairFromUser(ctx context.Context, u *model.User, prevT
 	}
 
 	return &model.TokenPair{
-		IDToken:      idToken,
-		RefreshToken: refreshToken.SS,
+		IDToken:      model.IDToken{SS: idToken},
+		RefreshToken: model.RefreshToken{SS: refreshToken.SS, ID: refreshToken.ID, UID: u.UID},
 	}, nil
+}
+
+// ValidateIDToken validates the id token jwt string
+// It returns the user extract from the IDTokenCustomClaims
+func (s *tokenService) ValidateIDToken(tokenString string) (*model.User, error) {
+    claims, err := validateIDToken(tokenString, s.PubKey) // uses public RSA key
+
+    // We'll just return unauthorized error in all instances of failing to verify user
+    if err != nil {
+        log.Printf("Unable to validate or parse idToken - Error: %v\n", err)
+        return nil, apperrors.NewAuthorization("Unable to verify user from idToken")
+    }
+
+    return claims.User, nil
 }
