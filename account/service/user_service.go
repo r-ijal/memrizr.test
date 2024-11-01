@@ -32,7 +32,7 @@ func NewUserService(c *USConfig) model.UserService {
 }
 
 // Get retrieves a user based on their uuid
-func (s *userService) Get(ctx context.Context, uid uuid.UUID) (*model.User, error)  {
+func (s *userService) Get(ctx context.Context, uid uuid.UUID) (*model.User, error) {
 	u, err := s.UserRepository.FindByID(ctx, uid)
 
 	return u, err
@@ -41,19 +41,19 @@ func (s *userService) Get(ctx context.Context, uid uuid.UUID) (*model.User, erro
 // Signup reaches our to a UserRepository to verify the email address
 // is available and signs up the user if this is the case
 func (s *userService) Signup(ctx context.Context, u *model.User) error {
-    pw, err := hashPassword(u.Password)
+	pw, err := hashPassword(u.Password)
 
-    if err != nil {
-        log.Printf("Unable to signup user for email: %v\n", u.Email)
-        return apperrors.NewInternal()
-    }
+	if err != nil {
+		log.Printf("Unable to signup user for email: %v\n", u.Email)
+		return apperrors.NewInternal()
+	}
 
-    // now I realize why I originally used Signup(ctx, email, password)
-    // then created a user. It's somewhat un-natural to mutate the user here
-    u.Password = pw
-    if err := s.UserRepository.Create(ctx, u); err != nil {
-        return err
-    }
+	// now I realize why I originally used Signup(ctx, email, password)
+	// then created a user. It's somewhat un-natural to mutate the user here
+	u.Password = pw
+	if err := s.UserRepository.Create(ctx, u); err != nil {
+		return err
+	}
 
 	// err := s.EventBroker.PublishUserUpdate(u, true)
 	// if err != nil {
@@ -68,24 +68,40 @@ func (s *userService) Signup(ctx context.Context, u *model.User) error {
 // }
 
 func (s *userService) Signin(ctx context.Context, u *model.User) error {
-    uFetched, err := s.UserRepository.FindByEmail(ctx, u.Email)
+	uFetched, err := s.UserRepository.FindByEmail(ctx, u.Email)
 
-    // Will return NotAuthorized to client to omit details of why
-    if err != nil {
-        return apperrors.NewAuthorization("Invalid email and password combination")
-    }
+	// Will return NotAuthorized to client to omit details of why
+	if err != nil {
+		return apperrors.NewAuthorization("Invalid email and password combination")
+	}
 
-    // verify password - we previously created this method
-    match, err := comparePasswords(uFetched.Password, u.Password)
+	// verify password - we previously created this method
+	match, err := comparePasswords(uFetched.Password, u.Password)
 
-    if err != nil {
-        return apperrors.NewInternal()
-    }
+	if err != nil {
+		return apperrors.NewInternal()
+	}
 
-    if !match {
-        return apperrors.NewAuthorization("Invalid email and password combination")
-    }
+	if !match {
+		return apperrors.NewAuthorization("Invalid email and password combination")
+	}
 
-    *u = *uFetched
-    return nil
+	*u = *uFetched
+	return nil
+}
+
+func (s *userService) UpdateDetails(ctx context.Context, u *model.User) error {
+	err := s.UserRepository.Update(ctx, u)
+
+	if err != nil {
+		return err
+	}
+
+	// Publish user updated
+	// err = s.EventBroker.PublishUserUpdated(u, false)
+	// if err != nil {
+	//     return apperrors.NewInternal()
+	// }
+
+	return nil
 }
