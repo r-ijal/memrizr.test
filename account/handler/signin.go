@@ -54,7 +54,15 @@ func (h *Handler) Signin(c *gin.Context) {
 		return
 	}
 
+	// c.JSON(http.StatusOK, gin.H{
+	// 	"tokens": tokens,
+	// })
+
+	// Custom response structure to match expected JSON format
 	c.JSON(http.StatusOK, gin.H{
-		"tokens": tokens,
+		"tokens": gin.H{
+			"idToken":      tokens.IDToken.SS,
+			"refreshToken": tokens.RefreshToken.SS,
+		},
 	})
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"memrizr/account/model"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -26,6 +27,17 @@ func (m *MockTokenService) NewPairFromUser(ctx context.Context, u *model.User, p
 	}
 
 	return r0, r1
+}
+
+func (m *MockTokenService) Signout(ctx context.Context, uid uuid.UUID) error {
+    ret := m.Called(ctx, uid)
+
+    var r0 error
+    if ret.Get(0) != nil {
+        r0 = ret.Get(0).(error)
+    }
+
+    return r0
 }
 
 // ValidateIDToken mocks concrete ValidateIDToken
