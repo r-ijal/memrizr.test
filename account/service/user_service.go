@@ -15,12 +15,14 @@ import (
 // of UserRepository for use in service methods
 type userService struct {
 	UserRepository model.UserRepository
+	ImageRepository model.ImageRepository
 }
 
 // USConfig will hold repositories that will eventually be
 // injected into this service layer
 type USConfig struct {
 	UserRepository model.UserRepository
+	ImageRepository model.ImageRepository
 }
 
 // NewUserService is a factory func for initializing a UserService
@@ -28,6 +30,7 @@ type USConfig struct {
 func NewUserService(c *USConfig) model.UserService {
 	return &userService{
 		UserRepository: c.UserRepository,
+		ImageRepository: c.ImageRepository,
 	}
 }
 

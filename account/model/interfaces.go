@@ -40,3 +40,5 @@ type TokenRepository interface {
     DeleteRefreshToken(ctx context.Context, userID string, prevTokenID string) error
     DeleteUserRefreshTokens(ctx context.Context, userID string) error
 }
+
+type ImageRepository interface {}
